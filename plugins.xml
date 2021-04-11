@@ -1,0 +1,6 @@
+<library path="lib/libiort_filters">
+        <class type="iort_filters::QRFilter" base_class_type="insitu::Filter">
+            <description>Scans a QR code and overlays sensor data</description>
+        </class>
+        </library>
+        
