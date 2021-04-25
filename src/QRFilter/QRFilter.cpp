@@ -3,38 +3,12 @@
 
 #include <opencv2/calib3d.hpp>
 
+// #define DEBUG
+#ifdef DEBUG
 #include <iostream>
+#endif
 
-namespace iort_filters
-{
-/*
-    Filter Implementation
-*/
-QRFilter::QRFilter(void)
-{
-    iortSub = nullptr;
-    scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
-}
-
-void QRFilter::onCore(Json::Value data)
-{
-    settings["data"] = data;
-}
-
-void QRFilter::onInit(void)
-{
-    settingsDialog = new QRFilterDialog(this);
-
-    /* initialize image subscriber (hardcoded for now) */
-    image_transport::ImageTransport it(getNodeHandle());
-    imgSub = it.subscribe("/usb_cam/image_raw", 1, &QRFilter::imageCB, this);
-}
-
-void QRFilter::onDelete(void)
-{
-    // TODO cleanup code
-    delete iortSub;
-}
+namespace {
 
 void drawtorect(cv::Mat& mat, cv::Rect target, const std::string& str,
                 int face = cv::FONT_HERSHEY_PLAIN, int thickness = 1,
@@ -58,13 +32,46 @@ void drawtorect(cv::Mat& mat, cv::Rect target, const std::string& str,
         scale, color, thickness, 8, false);
 }
 
+}
+
+namespace iort_filters
+{
+/*
+    Filter Implementation
+*/
+QRFilter::QRFilter(void)
+{
+    iortSub = nullptr;
+    scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
+}
+
+void QRFilter::onCore(Json::Value data)
+{
+    settings["data"] = data;
+}
+
+void QRFilter::onInit(void)
+{
+    settingsDialog = new QRFilterDialog(this);
+
+    /* initialize image subscriber (hardcoded for now) */
+    image_transport::ImageTransport it(getNodeHandle());
+    imgSub = it.subscribe("/camera_left/color/image_raw", 1, &QRFilter::imageCB, this);
+}
+
+void QRFilter::onDelete(void)
+{
+    // TODO cleanup code
+    //delete iortSub;
+}
+
 const cv::Mat QRFilter::apply(void)
 {
     /*
         Create a transparent image to construct your overlay on
     */
-    cv::Mat ret = cv::Mat(settings.get("height", 720).asInt(),
-                          settings.get("width", 1280).asInt(), CV_8UC4,
+    cv::Mat ret = cv::Mat(settings.get("height", 480).asInt(),
+                          settings.get("width", 640).asInt(), CV_8UC4,
                           cv::Scalar(255, 255, 255, 0));
 
     if (uuid.length() > 0)
@@ -81,19 +88,9 @@ const cv::Mat QRFilter::apply(void)
         if (settings["data"] != Json::nullValue)
         {
             /* lambda response recieved, overlay data */
-            std::string data;
-            data = "color is " + settings["data"].get("light", "null").asString();
-            drawtorect(datMat, cv::Rect(0, 0, 600, 150), data, 1, 8);
+            drawtorect(datMat, cv::Rect(0, 0, 600, 150), "valve_encoder:", 1, 8);
 
-            if (settings["data"].get("tilt", "null").asString() == "true") {
-                data = "tilted";
-            } else {
-                data = "not tilted";
-            }
-            drawtorect(datMat, cv::Rect(0, 150, 600, 150), data, 1, 8);
-
-            data = "door is " + settings["data"].get("hall", "null").asString();
-            drawtorect(datMat, cv::Rect(0, 300, 600, 150), data, 1, 8);
+            drawtorect(datMat, cv::Rect(0, 150, 600, 300), settings["data"].get("pot", 0).asString(), 1, 8);
 
             int64_t pot = settings["data"].get("pot", 0).asInt64();
             cv::rectangle(datMat, cv::Rect(0, 450, (pot * 600) / 4095, 150), cv::Scalar(255, 0, 0, 255), -1);
@@ -122,6 +119,11 @@ void QRFilter::imageCB(const sensor_msgs::Image::ConstPtr& msg)
         /* convert ROS image to OpenCV image */
         cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
 
+
+#ifdef DEBUG
+        std::cout << "dims: " << cv_ptr->image.cols << "x" << cv_ptr->image.rows << "\n";
+#endif
+
         /* convert OpenCV image to ZBar image */
         zbar::Image zImg(cv_ptr->image.cols, cv_ptr->image.rows, "Y800",
                          (uchar*)cv_ptr->image.data,
@@ -149,14 +151,13 @@ void QRFilter::imageCB(const sensor_msgs::Image::ConstPtr& msg)
             if (detected_uuid != uuid)
             {
                 uuid = detected_uuid;
-                if (iortSub != nullptr) delete iortSub;
+                // if (iortSub != nullptr) delete iortSub;
                 iortSub = core.subscribe(uuid, &QRFilter::onCore, this);
             }
         }
-        else
-        {
-            uuid.clear();
-        }
+#ifdef DEBUG
+        std::cout << "detected_uuid: " << detected_uuid << "\n";
+#endif
     }
     catch (std::exception e)
     {

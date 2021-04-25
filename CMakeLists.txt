@@ -47,6 +47,9 @@ include_directories(
 set(iort_filters_HDRS
     inc/QRFilter/QRFilter.hpp
     inc/QRFilter/QRFilter_dialog.hpp
+
+    inc/IoRT_Plot/IoRT_Plot.hpp
+    inc/IoRT_Plot/IoRT_Plot_dialog.hpp
 )
 
 qt5_wrap_cpp(iort_filters_MOCS ${iort_filters_HDRS})
@@ -55,6 +58,9 @@ qt5_wrap_cpp(iort_filters_MOCS ${iort_filters_HDRS})
 add_library(${PROJECT_NAME}
     src/QRFilter/QRFilter.cpp
     src/QRFilter/QRFilter_dialog.cpp
+
+    src/IoRT_Plot/IoRT_Plot.cpp
+    src/IoRT_Plot/IoRT_Plot_dialog.cpp
 
     ${iort_filters_MOCS}
 )
