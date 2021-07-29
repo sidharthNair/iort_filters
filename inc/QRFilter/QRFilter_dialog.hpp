@@ -5,23 +5,34 @@
 
 namespace iort_filters
 {
-class QRFilterDialog : public insitu::FilterDialog
-{
-    Q_OBJECT
-private:
-    QPushButton* okButton;
-    QPushButton* cancelButton;
 
-    QGridLayout* layout;
+    class QRFilterDialog : public insitu::FilterDialog
+    {
+        Q_OBJECT
+    private:
+        QPushButton *okButton;
+        QPushButton *cancelButton;
+        QGridLayout *layout;
+        QLabel *desc;
+        QListWidget *list;
+        QCheckBox *cb;
+        std::vector<std::string> queries;
 
-public Q_SLOTS:
+    public Q_SLOTS:
 
-    void onOK(void);
+        void onOK(void);
 
-public:
-    QRFilterDialog(insitu::Filter* parent_);
-};
+    public:
+        QRFilterDialog(insitu::Filter *parent_);
 
-}    // end namespace iort_filters
+        void updateList(void);
 
-#endif    // end iort_filters_QRFilter_DIALOG_HPP
+        std::vector<std::string> getQueries()
+        {
+            return queries;
+        }
+    };
+
+} // end namespace iort_filters
+
+#endif // end iort_filters_QRFilter_DIALOG_HPP
