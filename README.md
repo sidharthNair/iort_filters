@@ -29,4 +29,4 @@ sudo catkin install iort_lib
 
 ## Testing
 
-You should now be able to discover the filters `IoRT_Plot` and `QRFilter` in the `Add Filter` modal dialogue in `insitu`.
+You should now be able to discover the filters `IoRT_Plot`, `QRFilter`, and `MQTTOverlay` in the `Add Filter` modal dialogue in `insitu`.
