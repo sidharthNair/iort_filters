@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1)
 project(iort_filters)
+
 
 # # specify the C++ standard
 add_compile_options(-fPIC -shared)
@@ -18,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
     iort_lib
 )
 find_package(jsoncpp REQUIRED)
-find_package(OpenCV 3.4.5 REQUIRED)
+find_package(OpenCV 4.2.0 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Qt5 COMPONENTS Core Gui Widgets)
@@ -50,6 +51,9 @@ set(iort_filters_HDRS
 
     inc/IoRT_Plot/IoRT_Plot.hpp
     inc/IoRT_Plot/IoRT_Plot_dialog.hpp
+
+    inc/MQTTOverlay/MQTTOverlay.hpp
+    inc/MQTTOverlay/MQTTOverlay_dialog.hpp
 )
 
 qt5_wrap_cpp(iort_filters_MOCS ${iort_filters_HDRS})
@@ -61,6 +65,9 @@ add_library(${PROJECT_NAME}
 
     src/IoRT_Plot/IoRT_Plot.cpp
     src/IoRT_Plot/IoRT_Plot_dialog.cpp
+
+    src/MQTTOverlay/MQTTOverlay.cpp
+    src/MQTTOverlay/MQTTOverlay_dialog.cpp
 
     ${iort_filters_MOCS}
 )
