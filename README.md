@@ -1,7 +1,7 @@
 
 # IoRT Filters
 
-`iort_filters` provides two example `insitu` extensions that use `iort_lib` to overlay IoT data onto an image stream as part of a demonstration of the IoT-Robotics Integration project. Other major components of the project are available at the links below:
+`iort_filters` provides three example `insitu` extensions that use `iort_lib` to overlay IoT data onto an image stream as part of a demonstration of the IoT-Robotics Integration project. Other major components of the project are available at the links below:
 
 1. [`iort_endpoint`](https://github.com/PaperFanz/iort_endpoint) - open source firmware for an ESP32 microcontroller to serve as an AWS IoT Core thing
 2. [`insitu`](https://github.com/PaperFanz/insitu) - open source situational awareness package with extension support
