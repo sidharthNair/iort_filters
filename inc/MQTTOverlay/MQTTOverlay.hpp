@@ -69,11 +69,7 @@ namespace iort_filters {
 
       iort::Subscriber* iortSub;
 
-      image_transport::Subscriber imgSub;
-
       std::string uuid;
-
-      cv_bridge::CvImageConstPtr cv_ptr;
 
   }; // end class MQTTOverlay
 
