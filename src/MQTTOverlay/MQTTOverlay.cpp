@@ -48,7 +48,7 @@ Filter Implementation
     settings["data"] = data;
   }
 
-  void MQTTOverlay::onInit(void)
+  void MQTTOverlay::filterInit(void)
   {
     settingsDialog = new MQTTOverlayDialog(this);
     setSize(QSize(160, 240));
@@ -79,7 +79,7 @@ Filter Implementation
       delete iortSub;
       iortSub = core.subscribe(uuid, &MQTTOverlay::onCore, this);
       settings["uuid_changed"] = false;
-      settings["update_list"] = true;
+      settings["update_list"] = true; // flag to update dialog list once we receive a data object
     }
     if (uuid == "")
     {

@@ -48,15 +48,15 @@ namespace iort_filters
         settings["data"] = data;
     }
 
-    void QRFilter::onInit(void)
+    void QRFilter::filterInit(void)
     {
         settingsDialog = new QRFilterDialog(this);
-
-        /* initialize image subscriber (hardcoded for now) */
         image_transport::ImageTransport it(getNodeHandle());
-        imgSub = it.subscribe("/usb_cam/image_raw", 1, &QRFilter::imageCB, this);
-
-        //imgSub = it.subscribe("/camera_left/color/image_raw", 1, &QRFilter::imageCB, this);
+        std::string image_topic = imageTopic();
+        if (image_topic.find("compressed", 0) == image_topic.length()-10) {
+            image_topic = image_topic.substr(0, image_topic.length()-11);
+        }
+        imgSub = it.subscribe(image_topic, 1, &QRFilter::imageCB, this);
     }
 
     void QRFilter::onDelete(void)

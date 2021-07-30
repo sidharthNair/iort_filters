@@ -59,7 +59,7 @@ namespace iort_filters {
       }
 
   private:
-      void onInit(void);
+      void filterInit(void);
 
       void onDelete(void);
       
