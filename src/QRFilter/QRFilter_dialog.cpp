@@ -48,6 +48,7 @@ namespace iort_filters
         }
         settings["bars"] = bars;
         settings["generate_bars"] = (bool)cb->checkState();
+        settings["update_list"] = true;
         accept();
     }
 
