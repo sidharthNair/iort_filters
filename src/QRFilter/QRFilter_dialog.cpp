@@ -48,7 +48,6 @@ namespace iort_filters
         }
         settings["bars"] = bars;
         settings["generate_bars"] = (bool)cb->checkState();
-        settings["update_list"] = true;
         accept();
     }
 
@@ -57,8 +56,6 @@ namespace iort_filters
         Json::Value &settings = parent->getSettingsValue();
         std::vector<std::string> members = settings["data"].getMemberNames();
         int bars = 0;
-        queries.clear();
-        list->clear();
         for (int i = 0; i < members.size(); i++)
         {
             queries.push_back(members[i]);
