@@ -1,21 +1,24 @@
-#ifndef iort_filters_QRFilter_DIALOG_HPP
-#define iort_filters_QRFilter_DIALOG_HPP
+#ifndef iort_filters_MQTTOverlay_DIALOG_HPP
+#define iort_filters_MQTTOverlay_DIALOG_HPP
 
 #include <insitu/filter.hpp>
 
 namespace iort_filters
 {
 
-    class QRFilterDialog : public insitu::FilterDialog
+    class MQTTOverlayDialog : public insitu::FilterDialog
     {
         Q_OBJECT
     private:
         QPushButton *okButton;
         QPushButton *cancelButton;
+        QLineEdit *text1;
         QGridLayout *layout;
-        QLabel *desc;
+        QLabel *desc1;
+        QLabel *desc2;
         QListWidget *list;
         QCheckBox *cb;
+        std::string uuid = "";
         std::vector<std::string> queries;
 
     public Q_SLOTS:
@@ -23,7 +26,7 @@ namespace iort_filters
         void onOK(void);
 
     public:
-        QRFilterDialog(insitu::Filter *parent_);
+        MQTTOverlayDialog(insitu::Filter *parent_);
 
         void updateList(void);
 
@@ -35,4 +38,4 @@ namespace iort_filters
 
 } // end namespace iort_filters
 
-#endif // end iort_filters_QRFilter_DIALOG_HPP
+#endif // end iort_filters_MQTTOverlay_DIALOG_HPP

@@ -1,13 +1,17 @@
-#include <QRFilter/QRFilter_dialog.hpp>
+#include <MQTTOverlay/MQTTOverlay_dialog.hpp>
 
 namespace iort_filters
 {
-    QRFilterDialog::QRFilterDialog(insitu::Filter *parent_) : FilterDialog(parent_)
+
+    MQTTOverlayDialog::MQTTOverlayDialog(insitu::Filter *parent_)
+        : FilterDialog(parent_)
     {
         okButton = new QPushButton(tr("OK"));
         okButton->setDefault(true);
         cancelButton = new QPushButton(tr("Cancel"));
-        desc = new QLabel(tr("Data Member List"));
+        text1 = new QLineEdit();
+        desc1 = new QLabel(tr("Enter Device UUID: "), text1);
+        desc2 = new QLabel(tr("Data Member List"));
         list = new QListWidget();
         list->setSpacing(5);
         list->setDragEnabled(true);
@@ -17,11 +21,13 @@ namespace iort_filters
         cb = new QCheckBox("Generate bar view (0-4095) for integer members");
 
         layout = new QGridLayout();
-        layout->addWidget(desc, 0, 0, 1, 2);
-        layout->addWidget(list, 1, 0, 1, 2);
-        layout->addWidget(cb, 2, 0, 1, 2);
-        layout->addWidget(cancelButton, 3, 0);
-        layout->addWidget(okButton, 3, 1);
+        layout->addWidget(desc1, 0, 0);
+        layout->addWidget(text1, 0, 1);
+        layout->addWidget(desc2, 1, 0, 1, 2);
+        layout->addWidget(list, 2, 0, 1, 2);
+        layout->addWidget(cb, 3, 0, 1, 2);
+        layout->addWidget(cancelButton, 4, 0);
+        layout->addWidget(okButton, 4, 1);
 
         setLayout(layout);
 
@@ -29,29 +35,40 @@ namespace iort_filters
         QObject::connect(cancelButton, SIGNAL(clicked()), SLOT(reject()));
     }
 
-    void QRFilterDialog::onOK(void)
+    void MQTTOverlayDialog::onOK(void)
     {
         Json::Value &settings = parent->getSettingsValue();
-        queries.clear();
-        int bars = 0;
-        for (int i = 0; i < list->count(); i++)
+        // TODO change parent settings e.g. settings["key"] = value
+        if (uuid != text1->text().toStdString())
         {
-            QListWidgetItem *item = list->item(i);
-            if (item->checkState())
+            uuid = text1->text().toStdString();
+            settings["uuid_changed"] = true;
+            settings["uuid"] = uuid;
+            list->clear();
+        }
+        else
+        {
+            queries.clear();
+            int bars = 0;
+            for (int i = 0; i < list->count(); i++)
             {
-                queries.push_back(item->text().toStdString());
-                if (settings["data"].get(item->text().toStdString(), 0).isInt())
+                QListWidgetItem *item = list->item(i);
+                if (item->checkState())
                 {
-                    bars++;
+                    queries.push_back(item->text().toStdString());
+                    if (settings["data"].get(item->text().toStdString(), 0).isInt())
+                    {
+                        bars++;
+                    }
                 }
             }
+            settings["bars"] = bars;
         }
-        settings["bars"] = bars;
         settings["generate_bars"] = (bool)cb->checkState();
         accept();
     }
 
-    void QRFilterDialog::updateList(void)
+    void MQTTOverlayDialog::updateList(void)
     {
         Json::Value &settings = parent->getSettingsValue();
         std::vector<std::string> members = settings["data"].getMemberNames();

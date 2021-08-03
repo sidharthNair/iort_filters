@@ -5,5 +5,8 @@
 <class type="iort_filters::IoRT_Plot" base_class_type="insitu::Filter">
     <description>Plot IoRT data over time</description>
 </class>
+<class type="iort_filters::MQTTOverlay" base_class_type="insitu::Filter">
+    <description>Overlays sensor data</description>
+</class>
 </library>
         

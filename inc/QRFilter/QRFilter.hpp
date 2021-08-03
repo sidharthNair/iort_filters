@@ -24,7 +24,6 @@
 
 namespace iort_filters
 {
-
 void drawtorect(cv::Mat& mat, cv::Rect target, const std::string& str,
                 int face = cv::FONT_HERSHEY_PLAIN, int thickness = 1,
                 cv::Scalar color = cv::Scalar(0, 0, 0, 255))
@@ -60,7 +59,7 @@ public:
     }
 
 private:
-    void onInit(void);
+    void filterInit(void);
 
     void onDelete(void);
 

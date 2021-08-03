@@ -45,18 +45,24 @@ IoRT_Plot::IoRT_Plot(void)
     scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
 }
 
-void IoRT_Plot::onInit(void)
+void IoRT_Plot::filterInit(void)
 {
     settingsDialog = new IoRT_PlotDialog(this);
 
-    /* initialize image subscriber (hardcoded for now) */
+    
     image_transport::ImageTransport it(getNodeHandle());
-    imgSub = it.subscribe("/camera_right/color/image_raw", 1, &IoRT_Plot::imageCB, this);
+    std::string image_topic = imageTopic();
+    if (image_topic.find("compressed", 0) == image_topic.length()-10) {
+        image_topic = image_topic.substr(0, image_topic.length()-11);
+    }
+    imgSub = it.subscribe(image_topic, 1, &IoRT_Plot::imageCB, this);
 }
 
 void IoRT_Plot::onDelete(void)
 {
     // TODO cleanup code
+    imgSub.shutdown();
+    delete iortSub;
 }
 
 void IoRT_Plot::onCore(Json::Value data)
@@ -85,7 +91,7 @@ const cv::Mat IoRT_Plot::apply (void)
         if (iortQueue.size() > 1)
         {
             // draw plot heading
-            cv::putText(ret, uuid + " valve_encoder:", cv::Point(10,20), cv::FONT_HERSHEY_PLAIN, 1.0, green);
+            cv::putText(ret, uuid + " potentiometer:", cv::Point(10,20), cv::FONT_HERSHEY_PLAIN, 1.0, green);
             
             // draw plot axis
             int x = 32;

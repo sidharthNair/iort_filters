@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(iort_filters)
 
+
 # # specify the C++ standard
 add_compile_options(-fPIC -shared)
 set(CMAKE_CXX_STANDARD 14)
@@ -50,6 +51,9 @@ set(iort_filters_HDRS
 
     inc/IoRT_Plot/IoRT_Plot.hpp
     inc/IoRT_Plot/IoRT_Plot_dialog.hpp
+
+    inc/MQTTOverlay/MQTTOverlay.hpp
+    inc/MQTTOverlay/MQTTOverlay_dialog.hpp
 )
 
 qt5_wrap_cpp(iort_filters_MOCS ${iort_filters_HDRS})
@@ -61,6 +65,9 @@ add_library(${PROJECT_NAME}
 
     src/IoRT_Plot/IoRT_Plot.cpp
     src/IoRT_Plot/IoRT_Plot_dialog.cpp
+
+    src/MQTTOverlay/MQTTOverlay.cpp
+    src/MQTTOverlay/MQTTOverlay_dialog.cpp
 
     ${iort_filters_MOCS}
 )
