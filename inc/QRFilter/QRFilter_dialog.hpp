@@ -16,6 +16,16 @@ namespace iort_filters
         QLabel *desc;
         QListWidget *list;
         QCheckBox *cb;
+        QCheckBox *estimate;
+        QLabel* simLatencyLabel;
+        QSpinBox* simLatencyBox;
+        QLabel* thresholdLatencyLabel;
+        QSpinBox* thresholdLatencyBox;
+        QLabel* sampleSizeLabel;
+        QSpinBox* sampleSizeBox;
+        QLabel* weightParamLabel;
+        QDoubleSpinBox* weightParamBox;
+
         std::vector<std::string> queries;
 
     public Q_SLOTS:

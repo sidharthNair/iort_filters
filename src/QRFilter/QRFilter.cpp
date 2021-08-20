@@ -3,7 +3,12 @@
 
 #include <opencv2/calib3d.hpp>
 
-// #define DEBUG
+#include <chrono>
+using namespace std::chrono_literals;
+
+#include <cmath>
+
+//#define DEBUG
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -11,8 +16,31 @@
 namespace
 {
 
+    double computeWeightedDelta(std::vector<double> previous_vals, double weight_param) {
+        double ret = 0;
+        double divisor = (pow(weight_param, previous_vals.size()) - 1); 
+        // Example n = 5, weight_param = 2: 
+        // Weights:        1/31 + 2/31 + 4/31 + 8/31 + 16/31 = 31/31 = 1
+        // Values:         1st    2nd    3rd    4th    5th                  (1st is oldest)
+        for (int i = 0; i < previous_vals.size(); i++) {
+            ret += (weight_param - 1) * previous_vals.at(i) / divisor;
+            divisor /= weight_param;
+        }
+        return ret;
+    }
+    
+
+    std::vector<double> deltas;
+    int64_t actual;
+    int counter = 0;
+    double last_value = 0;
+    bool estimation = false;
+    bool color = false;
+    uint64_t current_time;
+    uint64_t sim_latency_log = 0;
+
     void drawtorect(cv::Mat &mat, cv::Rect target, const std::string &str,
-                    int face = cv::FONT_HERSHEY_PLAIN, int thickness = 1,
+                    int face = cv::FONT_HERSHEY_COMPLEX, int thickness = 1,
                     cv::Scalar color = cv::Scalar(0, 0, 0, 255))
     {
         cv::Size rect = cv::getTextSize(str, face, 1.0, thickness, 0);
@@ -45,7 +73,33 @@ namespace iort_filters
 
     void QRFilter::onCore(Json::Value data)
     {
-        settings["data"] = data;
+        if (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count() 
+                                                                    - sim_latency_log > settings.get("sim_lat", 0).asInt64()*1000) {
+            settings["data"] = data;
+            actual = settings["data"].get("pot", 0).asInt64();
+            std::cout << "actual: " << settings["data"]["pot"] << std::endl;
+            color = false;
+            if (deltas.size() == 0) {
+                last_value = data.get("pot", 0).asInt64();
+                deltas.push_back(0);
+            }
+            else if (deltas.size() < settings.get("sample_size", 10).asInt64()) {
+                deltas.push_back((data.get("pot", 0).asInt64() - last_value));
+                last_value = data.get("pot", 0).asInt64();
+            }
+            else {
+                while (deltas.size() >= settings.get("sample_size", 10).asInt64()) {
+                    deltas.erase(deltas.begin());
+                }
+                deltas.push_back((data.get("pot", 0).asInt64() - last_value));
+                last_value = data.get("pot", 0).asInt64();
+                if (settings["estimate"].asBool()) {
+                    estimation = true;
+                }
+            }
+            current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            sim_latency_log = current_time;
+        }
     }
 
     void QRFilter::filterInit(void)
@@ -67,6 +121,9 @@ namespace iort_filters
     }
 
     const cv::Scalar black(0, 0, 0, 255);
+    const cv::Scalar blue(0, 0, 255, 255);
+    const cv::Scalar red(255, 0, 0, 255);
+    const cv::Scalar green(0, 255, 0, 255);
 
     const cv::Mat QRFilter::apply(void)
     {
@@ -101,12 +158,37 @@ namespace iort_filters
                 int i = 0;
                 for (std::string q : ((QRFilterDialog *)settingsDialog)->getQueries())
                 {
-                    std::string data = q + ": " + settings["data"].get(q, 0).asString();
-                    drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 1, 8, black);
+                    if (settings["estimate"].asBool()) {
+                        if (estimation && q == "pot") {
+                            int dt = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - current_time;
+                            if (dt > settings.get("threshold", 250).asInt64() * 1000) {
+                                double average = computeWeightedDelta(deltas, settings.get("weight_param", 2).asDouble());
+                                settings["data"]["pot"] = (int)(settings["data"].get("pot", 0).asInt64() + average);
+                                std::cout << "estimation: " << settings["data"]["pot"] << std::endl;
+                                color = true;
+                                deltas.erase(deltas.begin());
+                                deltas.push_back(average/2);
+                                current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                            }
+                        }
+                    }
+                    std::string data;
+                    if (q == "pot") {
+                        data = "valve: " + std::to_string((int)(settings["data"].get(q, 0).asInt64() / 4095.0 * 500.0)) + " psi";
+                    }
+                    else {
+                        data = q + ": " + settings["data"].get(q, 0).asString();
+                    }
+                    drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 1, 8, (color && q == "pot") ? blue : black);
                     if (settings["generate_bars"].asBool() && settings["data"].get(q, 0).isInt())
                     {
                         int64_t dataAsInt = settings["data"].get(q, 0).asInt64();
-                        cv::rectangle(datMat, cv::Rect(0, h / n * (i++) + (h / n / 3), (dataAsInt * w) / 4095, h / n / 3), cv::Scalar(255, 0, 0, 255), -1);
+                        cv::Scalar ryg_color(2*(int)(actual/4095.0*255.0), 2*(255-(int)(actual/4095.0*255.0)), 0, 255);
+                        cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (actual * w) / 4095, h / n / 3), ryg_color, -1);
+                        if (color) {
+                            cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (dataAsInt * w) / 4095, h / n / 3), blue, 2);
+                        }
+                        i++;
                     }
                 }
             }

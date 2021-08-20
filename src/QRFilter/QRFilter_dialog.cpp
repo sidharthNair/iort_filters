@@ -15,13 +15,42 @@ namespace iort_filters
         list->setDropIndicatorShown(true);
         list->setDragDropMode(QAbstractItemView::InternalMove);
         cb = new QCheckBox("Generate bar view (0-4095) for integer members");
+        estimate = new QCheckBox("Estimate Intermediate Values");
+
+        simLatencyLabel = new QLabel(tr("Simulated Latency (ms):"));
+        simLatencyBox = new QSpinBox();
+        simLatencyBox->setRange(0, 10000);
+        simLatencyBox->setValue(0);
+        thresholdLatencyLabel = new QLabel(tr("Threshold for Estimation (ms):"));
+        thresholdLatencyBox = new QSpinBox();
+        thresholdLatencyBox->setRange(0, 10000);
+        thresholdLatencyBox->setValue(250);
+        sampleSizeLabel = new QLabel(tr("Estimation Sample Size:"));
+        sampleSizeBox = new QSpinBox();
+        sampleSizeBox->setRange(0, 20);
+        sampleSizeBox->setValue(10);
+        weightParamLabel = new QLabel(tr("Weight Parameter:"));
+        weightParamBox = new QDoubleSpinBox();
+        weightParamBox->setRange(1.0, 10.0);
+        weightParamBox->setSingleStep(0.1);
+        weightParamBox->setValue(2);
 
         layout = new QGridLayout();
         layout->addWidget(desc, 0, 0, 1, 2);
         layout->addWidget(list, 1, 0, 1, 2);
         layout->addWidget(cb, 2, 0, 1, 2);
-        layout->addWidget(cancelButton, 3, 0);
-        layout->addWidget(okButton, 3, 1);
+        layout->addWidget(simLatencyLabel, 3, 0);
+        layout->addWidget(simLatencyBox, 3, 1);
+        layout->addWidget(estimate, 4, 0, 1, 2);
+        layout->addWidget(thresholdLatencyLabel, 5, 0);
+        layout->addWidget(thresholdLatencyBox, 5, 1);
+        layout->addWidget(sampleSizeLabel, 6, 0);
+        layout->addWidget(sampleSizeBox, 6, 1);
+        layout->addWidget(weightParamLabel, 7, 0);
+        layout->addWidget(weightParamBox, 7, 1);
+        layout->addWidget(cancelButton, 8, 0);
+        layout->addWidget(okButton, 8, 1);
+        
 
         setLayout(layout);
 
@@ -48,6 +77,11 @@ namespace iort_filters
         }
         settings["bars"] = bars;
         settings["generate_bars"] = (bool)cb->checkState();
+        settings["estimate"] = (bool)estimate->checkState();
+        settings["sim_lat"] = simLatencyBox->value();
+        settings["threshold"] = thresholdLatencyBox->value();
+        settings["sample_size"] = sampleSizeBox->value();
+        settings["weight_param"] = weightParamBox->value();
         accept();
     }
 
@@ -61,12 +95,12 @@ namespace iort_filters
             queries.push_back(members[i]);
             if (settings["data"].get(members[i], 0).isInt())
             {
-                bars++;
+                bars++; // count number of bars that need to be generated for scaling purposes
             }
             QListWidgetItem *item = new QListWidgetItem(members[i].c_str(), list);
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable); // set checkable flag
             item->setCheckState(Qt::Checked);                        // AND initialize check state
-            list->addItem(item);
+            list->addItem(item); // Add widget to list
         }
         settings["bars"] = bars;
     }
