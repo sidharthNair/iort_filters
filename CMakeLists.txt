@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
     iort_lib
 )
 find_package(jsoncpp REQUIRED)
-find_package(OpenCV 3.4.5 REQUIRED)
+find_package(OpenCV 4.2.0 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Qt5 COMPONENTS Core Gui Widgets)
