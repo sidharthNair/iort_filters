@@ -33,6 +33,7 @@ namespace
     std::vector<double> valve_2_deltas;
     int last_valve_1;
     int last_valve_2;
+    int counter = 0;
     bool estimation = false;
     bool color = false;
     uint64_t current_time;
@@ -251,6 +252,16 @@ namespace iort_filters
                                                  float(symbol->get_location_y(i))));
                 }
                 qrMutex.unlock();
+                counter = 0;
+            }
+            else if (uuid != "") {
+                counter++;
+                if (counter > 10) {
+                    detected_uuid = "";
+                    uuid = "";
+                    delete iortSub;
+                    iortSub = nullptr;
+                }
             }
 
             if (detected_uuid.length() > 0)
