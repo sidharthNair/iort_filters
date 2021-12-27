@@ -53,7 +53,7 @@ namespace iort_filters {
 
       const cv::Mat apply (void);
 
-      bool hasSettingEditor(void)
+      bool hasSettingEditor(void) const
       {
           return true;
       }
