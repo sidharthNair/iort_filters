@@ -29,10 +29,9 @@ namespace
         return ret;
     }
     
-    std::vector<double> valve_1_deltas;
-    std::vector<double> valve_2_deltas;
-    int last_valve_1;
-    int last_valve_2;
+
+    std::map<std::string, std::vector<double>> deltas;
+    std::map<std::string, int> last_values;
     int counter = 0;
     bool estimation = false;
     bool color = false;
@@ -77,27 +76,26 @@ namespace iort_filters
                                                                     - sim_latency_log > settings.get("sim_lat", 0).asInt64()*1000) {
             settings["data"] = data;
             color = false;
-            if (valve_1_deltas.size() == 0) {
-                valve_1_deltas.push_back(0);
-                valve_2_deltas.push_back(0);
-            }
-            else if (valve_1_deltas.size() < settings.get("sample_size", 10).asInt64()) {
-                valve_1_deltas.push_back((data.get("valve 1", 0).asInt64() - last_valve_1));
-                valve_2_deltas.push_back((data.get("valve 2", 0).asInt64() - last_valve_2));
-            }
-            else {
-                while (valve_1_deltas.size() >= settings.get("sample_size", 10).asInt64()) {
-                    valve_1_deltas.erase(valve_1_deltas.begin());
-                    valve_2_deltas.erase(valve_2_deltas.begin());
+            for (std::string q : ((QRFilterDialog *)settingsDialog)->getQueries()) {
+                if (data.get(q, "").isInt()) {
+                    if (deltas[q].size() == 0) {
+                        deltas[q].push_back(0);
+                    }
+                    else if (deltas[q].size() < settings.get("sample_size", 10).asInt64()) {
+                        deltas[q].push_back((data.get(q, 0).asInt64() - last_values[q]));
+                    }
+                    else {
+                        while (deltas[q].size() >= settings.get("sample_size", 10).asInt64()) {
+                            deltas[q].erase(deltas[q].begin());
+                        }
+                        deltas[q].push_back((data.get(q, 0).asInt64() - last_values[q]));
+                        if (settings["estimate"].asBool()) {
+                            estimation = true;
+                        }
+                    }
+                    last_values[q] = data.get(q, 0).asInt64();
                 }
-                valve_1_deltas.push_back((data.get("valve 1", 0).asInt64() - last_valve_1));
-                valve_2_deltas.push_back((data.get("valve 2", 0).asInt64() - last_valve_2));
-                if (settings["estimate"].asBool()) {
-                    estimation = true;
-                }
             }
-            last_valve_1 = data.get("valve 1", 0).asInt64();
-            last_valve_2 = data.get("valve 2", 0).asInt64();
             current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             sim_latency_log = current_time;
         }
@@ -160,38 +158,32 @@ namespace iort_filters
                 bool updateTime = false;
                 for (std::string q : ((QRFilterDialog *)settingsDialog)->getQueries())
                 {
-                    bool isValve = (q == "valve 1" || q == "valve 2");
+                    bool isInt = settings["data"].get(q, 0).isInt();
                     if (settings["estimate"].asBool()) {
-                        if (estimation && isValve) {
+                        if (estimation && isInt) {
                             int dt = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - current_time;
                             if (dt > settings.get("threshold", 250).asInt64() * 1000) {
-                                double average = computeWeightedDelta((q == "valve 1") ? valve_1_deltas : valve_2_deltas, settings.get("weight_param", 2).asDouble());
+                                double average = computeWeightedDelta(deltas[q], settings.get("weight_param", 2).asDouble());
                                 settings["data"][q] = (int)(settings["data"].get(q, 0).asInt64() + average);
+                                deltas[q].erase(deltas[q].begin());
+                                deltas[q].push_back(average/2);
                                 color = true;
-                                if (q == "valve 1") {
-                                    valve_1_deltas.erase(valve_1_deltas.begin());
-                                    valve_1_deltas.push_back(average/2);
-                                }
-                                else {
-                                    valve_2_deltas.erase(valve_2_deltas.begin());
-                                    valve_2_deltas.push_back(average/2);
-                                }
                                 updateTime = true;
                             }
                         }
                     }
                     std::string data;
-                    if (isValve) {
+                    if (q == "valve 1" || q == "valve 2") { // for demo
                         data = q + ": " + std::to_string((int)(settings["data"].get(q, 0).asInt64() / 4095.0 * 500.0)) + " psi";
                     }
                     else {
                         data = q + ": " + settings["data"].get(q, 0).asString();
                     }
-                    drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 1, 8, (color && isValve) ? blue : black);
+                    drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 1, 8, (color && isInt) ? blue : black);
                     if (settings["generate_bars"].asBool() && settings["data"].get(q, 0).isInt())
                     {
                         int64_t dataAsInt = settings["data"].get(q, 0).asInt64();
-                        int64_t actual = (q == "valve 1" ? last_valve_1 : last_valve_2);
+                        int64_t actual = last_values[q];
                         cv::Scalar ryg_color(2*(int)(actual/4095.0*255.0), 2*(255-(int)(actual/4095.0*255.0)), 0, 255);
                         cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (actual * w) / 4095, h / n / 3), ryg_color, -1);
                         if (color) {
