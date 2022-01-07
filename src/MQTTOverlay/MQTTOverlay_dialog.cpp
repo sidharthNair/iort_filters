@@ -19,6 +19,25 @@ namespace iort_filters
         list->setDropIndicatorShown(true);
         list->setDragDropMode(QAbstractItemView::InternalMove);
         cb = new QCheckBox("Generate bar view (0-4095) for integer members");
+        estimate = new QCheckBox("Estimate Intermediate Values");
+
+        simLatencyLabel = new QLabel(tr("Simulated Latency (ms):"));
+        simLatencyBox = new QSpinBox();
+        simLatencyBox->setRange(0, 10000);
+        simLatencyBox->setValue(0);
+        thresholdLatencyLabel = new QLabel(tr("Threshold for Estimation (ms):"));
+        thresholdLatencyBox = new QSpinBox();
+        thresholdLatencyBox->setRange(0, 10000);
+        thresholdLatencyBox->setValue(250);
+        sampleSizeLabel = new QLabel(tr("Estimation Sample Size:"));
+        sampleSizeBox = new QSpinBox();
+        sampleSizeBox->setRange(0, 20);
+        sampleSizeBox->setValue(10);
+        weightParamLabel = new QLabel(tr("Weight Parameter:"));
+        weightParamBox = new QDoubleSpinBox();
+        weightParamBox->setRange(1.0, 10.0);
+        weightParamBox->setSingleStep(0.1);
+        weightParamBox->setValue(2);
 
         layout = new QGridLayout();
         layout->addWidget(desc1, 0, 0);
@@ -26,8 +45,17 @@ namespace iort_filters
         layout->addWidget(desc2, 1, 0, 1, 2);
         layout->addWidget(list, 2, 0, 1, 2);
         layout->addWidget(cb, 3, 0, 1, 2);
-        layout->addWidget(cancelButton, 4, 0);
-        layout->addWidget(okButton, 4, 1);
+        layout->addWidget(simLatencyLabel, 4, 0);
+        layout->addWidget(simLatencyBox, 4, 1);
+        layout->addWidget(estimate, 5, 0, 1, 2);
+        layout->addWidget(thresholdLatencyLabel, 6, 0);
+        layout->addWidget(thresholdLatencyBox, 6, 1);
+        layout->addWidget(sampleSizeLabel, 7, 0);
+        layout->addWidget(sampleSizeBox, 7, 1);
+        layout->addWidget(weightParamLabel, 8, 0);
+        layout->addWidget(weightParamBox, 8, 1);
+        layout->addWidget(cancelButton, 9, 0);
+        layout->addWidget(okButton, 9, 1);
 
         setLayout(layout);
 
@@ -65,6 +93,11 @@ namespace iort_filters
             settings["bars"] = bars;
         }
         settings["generate_bars"] = (bool)cb->checkState();
+        settings["estimate"] = (bool)estimate->checkState();
+        settings["sim_lat"] = simLatencyBox->value();
+        settings["threshold"] = thresholdLatencyBox->value();
+        settings["sample_size"] = sampleSizeBox->value();
+        settings["weight_param"] = weightParamBox->value();
         accept();
     }
 
@@ -73,6 +106,8 @@ namespace iort_filters
         Json::Value &settings = parent->getSettingsValue();
         std::vector<std::string> members = settings["data"].getMemberNames();
         int bars = 0;
+        queries.clear();
+        list->clear();
         for (int i = 0; i < members.size(); i++)
         {
             queries.push_back(members[i]);
