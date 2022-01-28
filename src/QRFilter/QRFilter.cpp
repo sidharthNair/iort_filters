@@ -156,7 +156,7 @@ const cv::Mat QRFilter::apply(void) {
                 }
                 std::string data;
                 if (q == "valve 1" || q == "valve 2") {  // for demo
-                    data = q + ": " + std::to_string((int)(settings["data"].get(q, 0).asInt64() / 4095.0 * 500.0)) + " psi";
+                    data = q + ": " + std::to_string((int)((settings["data"].get(q, 0).asInt64() % 1024) / 1023.0 * 500.0)) + " psi";
                 } else {
                     data = q + ": " + settings["data"].get(q, 0).asString();
                 }
@@ -164,10 +164,11 @@ const cv::Mat QRFilter::apply(void) {
                 if (settings["generate_bars"].asBool() && settings["data"].get(q, 0).isInt()) {
                     int64_t dataAsInt = settings["data"].get(q, 0).asInt64();
                     int64_t actual = last_values[q];
-                    cv::Scalar ryg_color(2 * (int)(actual / 4095.0 * 255.0), 2 * (255 - (int)(actual / 4095.0 * 255.0)), 0, 255);
-                    cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (actual * w) / 4095, h / n / 3), ryg_color, -1);
+                    int64_t adjusted = actual % 1024; // to make valve data more sensitive to movements
+                    cv::Scalar ryg_color(2 * (int)(adjusted / 1023.0 * 255.0), 2 * (255 - (int)(adjusted / 1023.0 * 255.0)), 0, 255);
+                    cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (adjusted * w) / 1023, h / n / 3), ryg_color, -1);
                     if (color) {
-                        cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (dataAsInt * w) / 4095, h / n / 3), blue, 2);
+                        cv::rectangle(datMat, cv::Rect(0, h / n * i + (h / n / 3), (dataAsInt % 1024 * w) / 1023, h / n / 3), blue, 2);
                     }
                     i++;
                 }
