@@ -35,7 +35,7 @@ uint64_t current_time;
 uint64_t sim_latency_log = 0;
 
 void drawtorect(cv::Mat &mat, cv::Rect target, const std::string &str,
-                int face = cv::FONT_HERSHEY_COMPLEX, int thickness = 1,
+                int face = cv::FONT_HERSHEY_SIMPLEX, int thickness = 3,
                 cv::Scalar color = cv::Scalar(0, 0, 0, 255)) {
     cv::Size rect = cv::getTextSize(str, face, 1.0, thickness, 0);
     double scalex = (double)target.width / (double)rect.width;
@@ -160,7 +160,7 @@ const cv::Mat QRFilter::apply(void) {
                 } else {
                     data = q + ": " + settings["data"].get(q, 0).asString();
                 }
-                drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 1, 8, (color && isInt) ? blue : black);
+                drawtorect(datMat, cv::Rect(0, h / n * (i++), w, h / n), data, 0, 4, (color && isInt) ? blue : black);
                 if (settings["generate_bars"].asBool() && settings["data"].get(q, 0).isInt()) {
                     int64_t dataAsInt = settings["data"].get(q, 0).asInt64();
                     int64_t actual = last_values[q];
